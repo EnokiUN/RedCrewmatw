@@ -1,5 +1,3 @@
 """
-Utility functions for RedCrewmate.
+A simple utility module for RedCrewmate.
 """
-
-from .misc import *

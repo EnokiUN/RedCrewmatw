@@ -3,21 +3,12 @@ from typing import Optional, TypeVar
 
 T = TypeVar('T')
 
-class NotFound(Exception):
+def unwrap(x: Optional[T]) -> T:
     """
-    An exception that is raised when a variable is not found.
-    """
-    pass
+    A function inspired by Rust's Option::unwrap.
 
-def unwrap(var: Optional[T]) -> T:
+    If the argument is None, raise a ValueError else, returns the value.
     """
-    A function that returns the value of a variable if it is not None, otherwise raises a NotFound exception.
-
-    Parameters
-    ----------
-    var: Optional[Any]
-        The variable to unwrap.
-    """
-    if var is None:
-        raise NotFound()
-    return var
+    if x is None:
+        raise ValueError("Found None.")
+    return x
