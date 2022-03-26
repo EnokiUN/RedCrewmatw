@@ -114,15 +114,18 @@ class Command:
         return self
 
     async def convert_arg(self, arg: Parameter, given: str, context: CommandContext) -> Any:
-        if arg.annotation is _empty or arg.annotation is Any or issubclass(arg.annotation, str):
+        annotation = arg.annotation
+        if isinstance(annotation, str):
             return given
-        elif issubclass(arg.annotation, int):
+        elif annotation is _empty or annotation is Any or issubclass(annotation, str):
+            return given
+        elif issubclass(annotation, int):
             return int(given)
-        elif issubclass(arg.annotation, float):
+        elif issubclass(annotation, float):
             return float(given)
-        elif issubclass(arg.annotation, voltage.User):
+        elif issubclass(annotation, voltage.User):
             return context.me.get_user(given)
-        elif issubclass(arg.annotation, voltage.Member):
+        elif issubclass(annotation, voltage.Member):
             return context.server.get_member(given) # type: ignore
 
     async def invoke(self, context: CommandContext, prefix: str):
@@ -239,7 +242,39 @@ class CommandsClient(voltage.Client):
         self.prefix = prefix
         self.cogs: dict[str, Cog] = {}
         self.extensions: dict[str, ModuleType] = {}
-        self.commands: dict[str, Command] = {}
+        self.commands: dict[str, Command] = {"help": Command(self.help, "help", "Displays help for a command.", ["h", "help"], None)}
+
+    async def help(self, ctx: CommandContext, target: Optional[str] = None):
+        """
+        Basic help command.
+        """
+        prefix = await self.get_prefix(ctx.message, self.prefix)
+        if target is None:
+            embed = voltage.SendableEmbed(title = "Help", description = f"Use `{prefix}help <command>` to get help for a command.", colour = "#fff0f0", icon_url = ctx.me.user.display_avatar.url)
+            text = "\n### **No Category**\n"
+            for command in self.commands.values():
+                if command.cog is None:
+                    text += f"> {command.name}\n"
+            for i in self.cogs.values():
+                text += f"\n### **{i.name}**\n"
+                for j in i.commands:
+                    text += f"\n> {j.name}"
+            embed.description += text
+            return await ctx.reply("Here, have a help embed", embed=embed)
+        elif target in self.commands:
+            command = self.commands[target]
+            embed = voltage.SendableEmbed(title = f"Help for {command.name}", colour = "#0000ff", icon_url = ctx.me.user.display_avatar.url)
+            text = str()
+            usage = str()
+            for (name, data) in list(command.signature.parameters.items())[1:]:
+                default = f" = {data.default}" if (data.default is not _empty) and (data.default is not None) else ""
+                usage += f" [{name}{default}]" if data.default is not _empty else " <{name}>"
+            text += f"\n### **Usage**\n> `{prefix}{command.name}{usage}`"
+            if command.aliases:
+                text += f"\n\n### **Aliases**\n> {prefix}{', '.join(command.aliases)}"
+            embed.description = command.description + text if command.description else text
+            return await ctx.reply("Here, have a help embed", embed=embed)
+        await ctx.reply(f"Command {target} not found.")
 
     async def get_prefix(self, message: voltage.Message, prefix: Union[str, list[str], Callable[[voltage.Message], Awaitable[Any]]]) -> str:
         if isinstance(prefix, str):
@@ -306,10 +341,8 @@ class CommandsClient(voltage.Client):
             raise KeyError("Extension {} does not exist.".format(path))
         reload(module)
         for i in self.commands:
-            print(self.commands)
             if self.commands[i].cog == module:
                 del self.commands[i]
-            print(self.commands)
         if not hasattr(module, "setup"):
             raise AttributeError("Extension {} does not have a setup function.".format(path))
         self.add_cog(module.setup(self))

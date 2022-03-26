@@ -15,9 +15,7 @@ def setup(client: voltage.Client) -> Cog:
 
     @misc.command()
     async def imposter(ctx, member: voltage.Member, *, content = None):
-        """Impostor command.
-
-        This command is used to impersonate a user.
+        """Impersonate a user.
         """
         if member is None:
             return await ctx.send("couldn't find that user")
