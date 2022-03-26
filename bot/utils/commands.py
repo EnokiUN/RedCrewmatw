@@ -115,7 +115,9 @@ class Command:
 
     async def convert_arg(self, arg: Parameter, given: str, context: CommandContext) -> Any:
         annotation = arg.annotation
-        if isinstance(annotation, str):
+        if given is None:
+            return None
+        elif isinstance(annotation, str):
             return given
         elif annotation is _empty or annotation is Any or issubclass(annotation, str):
             return given
@@ -256,7 +258,7 @@ class CommandsClient(voltage.Client):
                 if command.cog is None:
                     text += f"> {command.name}\n"
             for i in self.cogs.values():
-                text += f"\n### **{i.name}**\n"
+                text += f"\n### **{i.name}**\n{i.description}\n"
                 for j in i.commands:
                     text += f"\n> {j.name}"
             embed.description += text
@@ -268,7 +270,7 @@ class CommandsClient(voltage.Client):
             usage = str()
             for (name, data) in list(command.signature.parameters.items())[1:]:
                 default = f" = {data.default}" if (data.default is not _empty) and (data.default is not None) else ""
-                usage += f" [{name}{default}]" if data.default is not _empty else " <{name}>"
+                usage += f" [{name}{default}]" if data.default is not _empty else f" <{name}>"
             text += f"\n### **Usage**\n> `{prefix}{command.name}{usage}`"
             if command.aliases:
                 text += f"\n\n### **Aliases**\n> {prefix}{', '.join(command.aliases)}"
@@ -342,7 +344,7 @@ class CommandsClient(voltage.Client):
         reload(module)
         for i in self.commands:
             if self.commands[i].cog == module:
-                del self.commands[i]
+                self.commands.pop(i)
         if not hasattr(module, "setup"):
             raise AttributeError("Extension {} does not have a setup function.".format(path))
         self.add_cog(module.setup(self))
@@ -361,9 +363,9 @@ class CommandsClient(voltage.Client):
             raise KeyError("Extension {} does not exist.".format(path))
         for i in self.commands:
             if self.commands[i].cog == module:
-                del self.commands[i]
-        del self.cogs[path]
-        del self.extensions[path]
+                self.commands.pop(i)
+        self.cogs.pop(module.name)
+        self.extensions.pop(path)
 
     def command(self, name: Optional[str] = None, description: Optional[str] = None, aliases: Optional[list[str]] = None):
         """

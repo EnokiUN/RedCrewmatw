@@ -13,15 +13,5 @@ def setup(client: voltage.Client) -> Cog:
         msg = await ctx.send(f"Pong! :ping_pong:")
         await msg.edit(content=f"Pong! :ping_pong: ({time() - start:2f}s)")
 
-    @misc.command()
-    async def imposter(ctx, member: voltage.Member, *, content = None):
-        """Impersonate a user.
-        """
-        if member is None:
-            return await ctx.send("couldn't find that user")
-        if content is None:
-            return await ctx.send("You need to provide a message to send.")
-        await ctx.send(content, masquerade = voltage.MessageMasquerade(name = member.display_name, avatar = member.display_avatar.url))
-
     return misc
 
