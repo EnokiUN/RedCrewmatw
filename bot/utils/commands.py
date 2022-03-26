@@ -1,8 +1,10 @@
 from __future__ import annotations
 from typing import Callable, Optional, Awaitable, Any, Union
+from types import ModuleType
 from inspect import signature, Parameter, _empty
 from shlex import split
 from itertools import zip_longest
+from importlib import import_module, reload
 
 import voltage
 
@@ -88,15 +90,16 @@ class Command:
     aliases: Optional[List[:class:`str`]]
         The aliases of the command.
     """
-    __slots__ = ('func', 'name', 'description', 'aliases', 'error_handler', 'signature')
+    __slots__ = ('func', 'name', 'description', 'aliases', 'error_handler', 'signature', 'cog')
 
-    def __init__(self, func: Callable[..., Awaitable[Any]], name: Optional[str] = None, description: Optional[str] = None, aliases: Optional[list[str]] = None):
+    def __init__(self, func: Callable[..., Awaitable[Any]], name: Optional[str] = None, description: Optional[str] = None, aliases: Optional[list[str]] = None, cog: Optional[Cog] = None):
         self.func = func
         self.name = name or func.__name__
         self.description = description or func.__doc__
         self.aliases = aliases or [self.name]
         self.error_handler = None
         self.signature = signature(func)
+        self.cog = cog
 
     def error(self, func: Callable[[Exception, CommandContext], Awaitable[Any]]):
         """
@@ -202,7 +205,7 @@ class Cog:
         """
         self.commands.append(command)
 
-    def command(self, name: Optional[str], description: Optional[str] = None, aliases: Optional[list[str]] = None):
+    def command(self, name: Optional[str] = None, description: Optional[str] = None, aliases: Optional[list[str]] = None):
         """
         A decorator for adding commands to the cog.
 
@@ -216,7 +219,7 @@ class Cog:
             The aliases of the command.
         """
         def decorator(func: Callable[..., Awaitable[Any]]):
-            command = Command(func, name, description, aliases)
+            command = Command(func, name, description, aliases, self)
             self.add_command(command)
             return command
         return decorator
@@ -234,7 +237,8 @@ class CommandsClient(voltage.Client):
         super().__init__()
         self.listeners = {"message": self.handle_commands}
         self.prefix = prefix
-        self.cogs: list[Cog] = []
+        self.cogs: dict[str, Cog] = {}
+        self.extensions: dict[str, ModuleType] = {}
         self.commands: dict[str, Command] = {}
 
     async def get_prefix(self, message: voltage.Message, prefix: Union[str, list[str], Callable[[voltage.Message], Awaitable[Any]]]) -> str:
@@ -269,9 +273,64 @@ class CommandsClient(voltage.Client):
         cog: :class:`Cog`
             The cog to add.
         """
-        self.cogs.append(cog)
+        self.cogs[cog.name] = cog
         for command in cog.commands:
             self.add_command(command)
+
+    def add_extension(self, path: str, *args, **kwargs):
+        """
+        Adds an extension to the client.
+
+        Parameters
+        ----------
+        path: :class:`str`
+            The path to the extension as a python dotpath.
+        """
+        module = import_module(path)
+        self.extensions[path] = module
+        if not hasattr(module, "setup"):
+            raise AttributeError("Extension {} does not have a setup function.".format(path))
+        self.add_cog(module.setup(self, *args, **kwargs))
+
+    def reload_extension(self, path: str):
+        """
+        Reloads an extension.
+
+        Parameters
+        ----------
+        path: :class:`str`
+            The path to the extension as a python dotpath.
+        """
+        module = self.extensions.get(path)
+        if module is None:
+            raise KeyError("Extension {} does not exist.".format(path))
+        reload(module)
+        for i in self.commands:
+            print(self.commands)
+            if self.commands[i].cog == module:
+                del self.commands[i]
+            print(self.commands)
+        if not hasattr(module, "setup"):
+            raise AttributeError("Extension {} does not have a setup function.".format(path))
+        self.add_cog(module.setup(self))
+
+    def remove_extension(self, path: str):
+        """
+        removes an extension.
+
+        Parameters
+        ----------
+        path: :class:`str`
+            The path to the extension as a python dotpath.
+        """
+        module = self.extensions.get(path)
+        if module is None:
+            raise KeyError("Extension {} does not exist.".format(path))
+        for i in self.commands:
+            if self.commands[i].cog == module:
+                del self.commands[i]
+        del self.cogs[path]
+        del self.extensions[path]
 
     def command(self, name: Optional[str] = None, description: Optional[str] = None, aliases: Optional[list[str]] = None):
         """
