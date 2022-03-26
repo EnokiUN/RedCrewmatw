@@ -15,8 +15,12 @@ async def ping(ctx: CommandContext):
     await ctx.send("Pong!")
 
 @client.command()
-async def add(ctx: CommandContext, a: int, b: int):
-    await ctx.send(str(a + b))
+async def add(ctx: CommandContext, a: int, b: int = 10):
+    await ctx.reply(a+b)
+
+@client.command()
+async def echo(ctx: CommandContext, *, args: str = "supply something u idot"):
+    await ctx.reply(args)
 
 load_dotenv()
 client.run(unwrap(os.getenv('TOKEN')))
