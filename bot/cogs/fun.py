@@ -1,5 +1,5 @@
 import PIL # type: ignore
-from PIL import Image
+from PIL import Image, ImageOps
 from io import BytesIO
 import random
 
@@ -14,16 +14,13 @@ def setup(client) -> Cog:
     @fun.command()
     async def imposter(ctx, member: voltage.Member, *, content = None):
         """Impersonate a user."""
-        if member is None:
-            return await ctx.send("couldn't find that user")
         if content is None:
             return await ctx.send("You need to provide a message to send.")
         await ctx.send(content, masquerade = voltage.MessageMasquerade(name = member.display_name, avatar = member.display_avatar.url))
 
     @fun.command()
     async def sus(ctx, member: voltage.Member):
-        if member is None:
-            return await ctx.send("couldn't find that user")
+        """Make a user sus."""
         base = Image.open("assets/sus.jpg")
         pfp = Image.open(BytesIO(await member.display_avatar.get_binary())).resize((175, 175))
         base.paste(pfp, (115, 90))
@@ -31,6 +28,20 @@ def setup(client) -> Cog:
             base.save(data, "PNG")
             data.seek(0)
             return await ctx.reply("sus", attachment=voltage.File(data.read(), filename="sus.png"))
+
+    @fun.command()
+    async def arch(ctx, member: voltage.Member):
+        """Arch my beloved."""
+        mask = Image.open("assets/arch.png").convert("L")
+        pfp = Image.open(BytesIO(await member.display_avatar.get_binary())).convert("RGBA")
+        
+        output = ImageOps.fit(pfp, mask.size, centering=(0.5, 0.5))
+        output.putalpha(mask)
+
+        with BytesIO() as data:
+            output.save(data, "PNG")
+            data.seek(0)
+            return await ctx.reply("arch", attachment=voltage.File(data.read(), filename="arch.png"))
 
     @fun.command()
     async def sex(ctx):
