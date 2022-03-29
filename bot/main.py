@@ -24,12 +24,10 @@ client.add_extension("cogs.misc")
 client.add_extension("cogs.fun")
 
 @client.command()
-async def prefix(ctx, prefix):
-    perms = 0
-    for i in ctx.author.roles:
-        perms |= i.permissions.flags
-    perms = voltage.ServerPermissions.new_with_flags(perms)
-    if not perms.kick_members:
+async def prefix(ctx: CommandContext, prefix):
+    if ctx.server is None:
+        return await ctx.reply("Custom prefixes are only available in servers.")
+    if not ctx.author.permissions.kick_members:
         return await ctx.reply("You don't have permission to change the prefix")
     with open ("prefixes.json", "r") as f:
         prefixes = json.load(f)
