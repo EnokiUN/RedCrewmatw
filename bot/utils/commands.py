@@ -44,6 +44,36 @@ class NotEnoughArgs(Exception):
     def __str__(self):
         return f"{self.command.name} expected {self.expected} args, got {self.actual}"
 
+class MemberNotFound(Exception):
+    """
+    An exception that is raised when a member is not found.
+
+    Attributes
+    ----------
+    given: :class:`str`
+        The name of the member that was not found.
+    """
+    def __init__(self, given: str):
+        self.given = given
+
+    def __str__(self):
+        return f"Member {self.given} not found"
+
+class UserNotFound(Exception):
+    """
+    An exception that is raised when a user is not found.
+
+    Attributes
+    ----------
+    given: :class:`str`
+        The name of the user that was not found.
+    """
+    def __init__(self, given: str):
+        self.given = given
+
+    def __str__(self):
+        return f"User {self.given} not found"
+
 class CommandContext:
     """
     A context for a command.
@@ -125,10 +155,16 @@ class Command:
             return int(given)
         elif issubclass(annotation, float):
             return float(given)
-        elif issubclass(annotation, voltage.User):
-            return context.me.get_user(given)
         elif issubclass(annotation, voltage.Member):
-            return context.server.get_member(given) # type: ignore
+            member = context.server.get_member(given) # type: ignore
+            if member is None:
+                raise MemberNotFound(given)
+            return member
+        elif issubclass(annotation, voltage.User):
+            user = context.me.get_user(given)
+            if user is None:
+                raise UserNotFound(given)
+            return user
 
     async def invoke(self, context: CommandContext, prefix: str):
         if len(( params := self.signature.parameters )) > 1:
