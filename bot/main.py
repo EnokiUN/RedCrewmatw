@@ -5,12 +5,14 @@ import json
 
 from utils import unwrap, Command, CommandContext, Cog, CommandsClient, CommandNotFound
 
-async def prefix(messsage):
+async def get_prefix(message):
+    if message.server is None:
+        return '-'
     with open ("prefixes.json", "r") as f:
         prefixes = json.load(f)
-    return prefixes.get(str(messsage.server.id), "-")
+    return prefixes.get(str(message.server.id), "-")
 
-client = CommandsClient(prefix)
+client = CommandsClient(get_prefix)
 
 @client.error('message')
 async def on_message_error(error: Exception, message: voltage.Message):
