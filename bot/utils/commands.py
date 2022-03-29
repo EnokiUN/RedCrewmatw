@@ -274,7 +274,7 @@ class CommandsClient(voltage.Client):
     cogs: List[:class:`Cog`]
         The cogs that are loaded.
     """
-    def __init__(self, prefix: Union[str, list[str], Callable[[voltage.Message], Awaitable[Any]]]):
+    def __init__(self, prefix: Union[str, list[str], Callable[[voltage.Message, CommandsClient], Awaitable[Any]]]):
         super().__init__()
         self.listeners = {"message": self.handle_commands}
         self.prefix = prefix
@@ -314,7 +314,7 @@ class CommandsClient(voltage.Client):
             return await ctx.reply("Here, have a help embed", embed=embed)
         await ctx.reply(f"Command {target} not found.")
 
-    async def get_prefix(self, message: voltage.Message, prefix: Union[str, list[str], Callable[[voltage.Message], Awaitable[Any]]]) -> str:
+    async def get_prefix(self, message: voltage.Message, prefix: Union[str, list[str], Callable[[voltage.Message, CommandsClient], Awaitable[Any]]]) -> str:
         if isinstance(prefix, str):
             return prefix
         elif isinstance(prefix, list):
@@ -322,7 +322,7 @@ class CommandsClient(voltage.Client):
                 if message.content.startswith(p):
                     return p
         elif isinstance(prefix, Callable):
-            return await self.get_prefix(message, await prefix(message))
+            return await self.get_prefix(message, await prefix(message, self))
         return str(prefix)
 
     def add_command(self, command: Command):

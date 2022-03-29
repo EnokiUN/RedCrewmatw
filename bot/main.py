@@ -5,12 +5,12 @@ import json
 
 from utils import unwrap, Command, CommandContext, Cog, CommandsClient, CommandNotFound
 
-async def get_prefix(message):
+async def get_prefix(message, client):
     if message.server is None:
-        return '-'
+        return ['-', client.user.mention+' ', client.user.mention]
     with open ("prefixes.json", "r") as f:
         prefixes = json.load(f)
-    return prefixes.get(str(message.server.id), "-")
+    return [prefixes.get(str(message.server.id), "-"), client.user.mention+' ', client.user.mention]
 
 client = CommandsClient(get_prefix)
 
