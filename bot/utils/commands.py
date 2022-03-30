@@ -389,16 +389,17 @@ class CommandsClient(voltage.Client):
         """
         if not path in self.extensions:
             raise KeyError("Extension {} does not exist.".format(path))
-        module = self.extensions.pop(path)
+        module, name = self.extensions.pop(path)
         items = list(self.commands.items())
         for name, command in items:
             if command.cog:
-                if command.cog.name == module[1]:
+                if command.cog.name == name:
                     cmd = self.commands.pop(name)
                     del cmd
-        cog = self.cogs.pop(module[1])
+        cog = self.cogs.pop(name)
         del cog
         del module
+        del name
 
     def command(self, name: Optional[str] = None, description: Optional[str] = None, aliases: Optional[list[str]] = None):
         """

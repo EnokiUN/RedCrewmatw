@@ -45,6 +45,48 @@ def setup(client) -> Cog:
             return await ctx.reply("arch", attachment=voltage.File(data.read(), filename="arch.png"))
 
     @fun.command()
+    async def gentoo(ctx, member: voltage.Member):
+        """Gentoo also my beloved."""
+        mask = Image.open("assets/gentoo.png").convert("L")
+        pfp = Image.open(BytesIO(await member.display_avatar.get_binary())).convert("RGBA")
+        
+        output = ImageOps.fit(pfp, mask.size, centering=(0.5, 0.5))
+        output.putalpha(mask)
+
+        with BytesIO() as data:
+            output.save(data, "PNG")
+            data.seek(0)
+            return await ctx.reply("gentoo", attachment=voltage.File(data.read(), filename="gentoo.png"))
+
+    @fun.command()
+    async def debian(ctx, member: voltage.Member):
+        """Debian more like decent amirite?"""
+        mask = Image.open("assets/debian.png").convert("L")
+        pfp = Image.open(BytesIO(await member.display_avatar.get_binary())).convert("RGBA")
+        
+        output = ImageOps.fit(pfp, mask.size, centering=(0.5, 0.5))
+        output.putalpha(mask)
+
+        with BytesIO() as data:
+            output.save(data, "PNG")
+            data.seek(0)
+            return await ctx.reply("debian", attachment=voltage.File(data.read(), filename="debian.png"))
+
+    @fun.command()
+    async def windows(ctx, member: voltage.Member):
+        """CringeOS"""
+        mask = Image.open("assets/windows.png").convert("L")
+        pfp = Image.open(BytesIO(await member.display_avatar.get_binary())).convert("RGBA")
+        
+        output = ImageOps.fit(pfp, mask.size, centering=(0.5, 0.5))
+        output.putalpha(mask)
+
+        with BytesIO() as data:
+            output.save(data, "PNG")
+            data.seek(0)
+            return await ctx.reply("windows", attachment=voltage.File(data.read(), filename="windows.png"))
+
+    @fun.command()
     async def sex(ctx):
         """Sex command :lenny:"""
         file = await get_file_from_url(client.http, "https://autumn.revolt.chat/attachments/rRBCDm2VSn8UJKLuxtEcVa9ZE2uStNp7hXgCR8Idw5/h.mp4")
