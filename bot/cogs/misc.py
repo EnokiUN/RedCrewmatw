@@ -13,5 +13,10 @@ def setup(client: voltage.Client) -> Cog:
         msg = await ctx.send(f"Pong! :ping_pong:")
         await msg.edit(content=f"Pong! :ping_pong: ({time() - start:2f}s)")
 
+    @misc.command()
+    async def test(ctx) -> None:
+        """Test command that changes functionality every time I need to test something."""
+        await ctx.send(ctx.message.url)
+
     return misc
 
