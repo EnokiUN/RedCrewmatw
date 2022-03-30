@@ -2,6 +2,7 @@ import PIL # type: ignore
 from PIL import Image, ImageOps
 from io import BytesIO
 import random
+import asyncio
 
 import voltage
 from voltage.file import get_file_from_url
@@ -55,5 +56,37 @@ def setup(client) -> Cog:
         if member is None:
             member = ctx.author
         await ctx.reply(f"{member.display_name} is **{random.randint(0, 100)}%** sus :amogus:")
+
+    @fun.command()
+    async def fight(ctx, member: voltage.Member):
+        """Fight someone."""
+        msg = await ctx.reply(f"{ctx.author.display_name} is fighting {member.display_name}")
+        await asyncio.sleep(3)
+        await msg.edit("3")
+        await asyncio.sleep(1)
+        await msg.edit("2")
+        await asyncio.sleep(1)
+        await msg.edit("1")
+        await asyncio.sleep(1)
+        await msg.edit("FIGHT")
+        await asyncio.sleep(1)
+        hp1 = hp2 = 100
+        while hp1 > 0 and hp2 > 0:
+            dmg = random.randint(0, 10)
+            hp1 = max(hp1 - dmg, 0)
+            await msg.edit(f"{member.display_name} hit {ctx.author.display_name} for {dmg} damage. {ctx.author.display_name} has {hp1} HP left.")
+            if hp1 <= 0:
+                break
+            await asyncio.sleep(1)
+            dmg = random.randint(0, 10)
+            hp2 = max(hp2-dmg, 0)
+            await msg.edit(f"{ctx.author.display_name} hit {member.display_name} for {dmg} damage. {member.display_name} has {hp2} HP left.")
+            if hp2 <= 0:
+                break
+            await asyncio.sleep(1)
+        if hp1 > 0:
+            await ctx.send(f"{ctx.author.display_name} won!")
+        else:
+            await ctx.send(f"{member.display_name} won!")
 
     return fun
