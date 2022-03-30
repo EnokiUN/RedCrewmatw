@@ -25,6 +25,7 @@ client.add_extension("cogs.fun")
 
 @client.command()
 async def prefix(ctx: CommandContext, prefix):
+    """Set the prefix for this server"""
     if ctx.server is None:
         return await ctx.reply("Custom prefixes are only available in servers.")
     if not ctx.author.permissions.kick_members:
@@ -37,11 +38,29 @@ async def prefix(ctx: CommandContext, prefix):
     await ctx.reply(f"Prefix changed to `{prefix}`")
 
 @client.command()
+async def load(ctx, cog: str):
+    """Load a cog"""
+    if ctx.author.id != client.user.owner_id:
+        return await ctx.send("You are not my owner, you do not own me, you cannot tell me what to do.\nNow shoo.")
+    client.add_extension(f"cogs.{cog}")
+    await ctx.reply(f"Cog `{cog}` loaded")
+
+@client.command()
 async def reload(ctx, cog: str):
+    """Reload a cog"""
     if ctx.author.id != client.user.owner_id:
         return await ctx.send("You are not my owner, scram.")
     client.reload_extension(f"cogs.{cog}")
-    await ctx.reply("Reloaded")
+    await ctx.reply(f"Cog `{cog}` reloaded")
+
+@client.command()
+async def unload(ctx, cog: str):
+    """Unload a cog"""
+    if ctx.author.id != client.user.owner_id:
+        return await ctx.send("You are not my owner, there's honestly nothing wrong with that but I won't let you do \
+                that because you don't have a phd in being retarded.")
+    client.remove_extension(f"cogs.{cog}")
+    await ctx.reply(f"Cog `{cog}` unloaded")
 
 load_dotenv()
 client.run(unwrap(os.getenv('TOKEN')))

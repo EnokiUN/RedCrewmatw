@@ -279,7 +279,7 @@ class CommandsClient(voltage.Client):
         self.listeners = {"message": self.handle_commands}
         self.prefix = prefix
         self.cogs: dict[str, Cog] = {}
-        self.extensions: dict[str, ModuleType] = {}
+        self.extensions: dict[str, tuple[ModuleType, str]] = {}
         self.commands: dict[str, Command] = {"help": Command(self.help, "help", "Displays help for a command.", ["h", "help"], None)}
 
     async def help(self, ctx: CommandContext, target: Optional[str] = None):
@@ -360,10 +360,11 @@ class CommandsClient(voltage.Client):
             The path to the extension as a python dotpath.
         """
         module = import_module(path)
-        self.extensions[path] = module
+        cog = module.setup(self, *args, **kwargs)
+        self.extensions[path] = (module, cog.name)
         if not hasattr(module, "setup"):
             raise AttributeError("Extension {} does not have a setup function.".format(path))
-        self.add_cog(module.setup(self, *args, **kwargs))
+        self.add_cog(cog)
 
     def reload_extension(self, path: str):
         """
@@ -374,16 +375,8 @@ class CommandsClient(voltage.Client):
         path: :class:`str`
             The path to the extension as a python dotpath.
         """
-        module = self.extensions.get(path)
-        if module is None:
-            raise KeyError("Extension {} does not exist.".format(path))
-        reload(module)
-        for i in self.commands:
-            if self.commands[i].cog == module:
-                self.commands.pop(i)
-        if not hasattr(module, "setup"):
-            raise AttributeError("Extension {} does not have a setup function.".format(path))
-        self.add_cog(module.setup(self))
+        self.remove_extension(path)
+        self.add_extension(path)
 
     def remove_extension(self, path: str):
         """
@@ -394,14 +387,18 @@ class CommandsClient(voltage.Client):
         path: :class:`str`
             The path to the extension as a python dotpath.
         """
-        module = self.extensions.get(path)
-        if module is None:
+        if not path in self.extensions:
             raise KeyError("Extension {} does not exist.".format(path))
-        for i in self.commands:
-            if self.commands[i].cog == module:
-                self.commands.pop(i)
-        self.cogs.pop(module.name)
-        self.extensions.pop(path)
+        module = self.extensions.pop(path)
+        items = list(self.commands.items())
+        for name, command in items:
+            if command.cog:
+                if command.cog.name == module[1]:
+                    cmd = self.commands.pop(name)
+                    del cmd
+        cog = self.cogs.pop(module[1])
+        del cog
+        del module
 
     def command(self, name: Optional[str] = None, description: Optional[str] = None, aliases: Optional[list[str]] = None):
         """
@@ -427,6 +424,8 @@ class CommandsClient(voltage.Client):
         if message.content.startswith(prefix):
             content = message.content[len(prefix):]
             command = content.split(" ")[0]
+            if not command:
+                return
             if command in self.commands:
                 if "command" in self.error_handlers:
                     try:
