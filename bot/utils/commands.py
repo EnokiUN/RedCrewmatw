@@ -5,6 +5,7 @@ from inspect import signature, Parameter, _empty
 from shlex import split
 from itertools import zip_longest
 from importlib import import_module, reload
+import sys
 
 import voltage
 
@@ -364,6 +365,7 @@ class CommandsClient(voltage.Client):
         self.extensions[path] = (module, cog.name)
         if not hasattr(module, "setup"):
             raise AttributeError("Extension {} does not have a setup function.".format(path))
+        reload(module)
         self.add_cog(cog)
 
     def reload_extension(self, path: str):
@@ -391,15 +393,18 @@ class CommandsClient(voltage.Client):
             raise KeyError("Extension {} does not exist.".format(path))
         module, name = self.extensions.pop(path)
         items = list(self.commands.items())
-        for name, command in items:
+        for command_name, command in items:
             if command.cog:
                 if command.cog.name == name:
-                    cmd = self.commands.pop(name)
+                    cmd = self.commands.pop(command_name)
                     del cmd
         cog = self.cogs.pop(name)
         del cog
         del module
         del name
+        print(path in sys.modules)
+        mod = sys.modules.pop(path)
+        del mod
 
     def command(self, name: Optional[str] = None, description: Optional[str] = None, aliases: Optional[list[str]] = None):
         """
