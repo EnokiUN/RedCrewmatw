@@ -6,3 +6,6 @@ A simple Revolt python bot made in Voltage.
 Yes the typo is intentional.
 
 I'll make a proper readme once I finish rewriting it.
+
+#### Note:
+The commands framework no longer resides here as it got added to the base library.
