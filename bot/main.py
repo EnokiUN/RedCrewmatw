@@ -1,9 +1,11 @@
 from dotenv import load_dotenv
 import os
-import voltage
 import json
 
-from utils import unwrap, Command, CommandContext, Cog, CommandsClient, CommandNotFound
+import voltage
+from voltage.ext import commands
+
+from utils import unwrap
 
 async def get_prefix(message, client):
     if message.server is None:
@@ -12,11 +14,11 @@ async def get_prefix(message, client):
         prefixes = json.load(f)
     return [prefixes.get(str(message.server.id), "-"), client.user.mention+' ', client.user.mention]
 
-client = CommandsClient(get_prefix)
+client = commands.CommandsClient(get_prefix)
 
 @client.error('message')
 async def on_message_error(error: Exception, message: voltage.Message):
-    if isinstance(error, CommandNotFound):
+    if isinstance(error, voltage.CommandNotFound):
         return
     await message.reply(f"An error has occured: {error}")
 
@@ -24,9 +26,9 @@ client.add_extension("cogs.misc")
 client.add_extension("cogs.fun")
 
 @client.command()
-async def prefix(ctx: CommandContext, prefix):
+async def prefix(ctx: commands.CommandContext, prefix):
     """Set the prefix for this server"""
-    if ctx.server is None:
+    if ctx.server is None or isinstance(ctx.author, voltage.User):
         return await ctx.reply("Custom prefixes are only available in servers.")
     if not ctx.author.permissions.kick_members:
         return await ctx.reply("You don't have permission to change the prefix")

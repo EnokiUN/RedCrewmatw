@@ -1,10 +1,15 @@
 from time import time
 
 import voltage
-from utils import Cog
+from voltage.ext import commands
 
-def setup(client: voltage.Client) -> Cog:
-    misc = Cog("Misc", "A collection of miscellaneous commands.")
+def setup(client: voltage.Client) -> commands.Cog:
+    misc = commands.Cog("Misc", "A collection of miscellaneous commands.")
+
+    @misc.listen("message")
+    async def on_message(message: voltage.Message):
+        if "/shrug" in message.content:
+            await message.channel.send(message.content.replace("/shrug", r"¯\\_(ツ)_/¯"), masquerade=voltage.MessageMasquerade(message.author.display_name, message.author.display_avatar.url))
 
     @misc.command()
     async def ping(ctx) -> None:
