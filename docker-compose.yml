@@ -2,3 +2,20 @@ services:
   bot:
     build: .
     restart: unless-stopped
+
+  database:
+    image: mariadb:latest
+    restart: unless-stopped
+
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASS}
+
+    volumes:
+      - ./init/01.sql:/docker-entrypoint-initdb.d/01.sql
+      - databasedata:/var/lib/mysql
+
+volumes:
+  databasedata: # guh

@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os
 import json
+import mariadb
 
 import voltage
 from voltage.ext import commands
@@ -24,6 +25,7 @@ async def on_message_error(error: Exception, message: voltage.Message):
 
 client.add_extension("cogs.misc")
 client.add_extension("cogs.fun")
+client.add_extension("cogs.economy")
 
 @client.command()
 async def prefix(ctx: commands.CommandContext, prefix):

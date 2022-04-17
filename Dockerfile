@@ -6,7 +6,7 @@ WORKDIR /bot
 
 COPY requirements.txt requirements.txt
 
-RUN apk add --no-cache git zlib-dev jpeg-dev musl-dev gcc
+RUN apk add --no-cache git gcc zlib-dev jpeg-dev musl-dev mariadb-connector-c-dev
 
 RUN pip3 install -U -r requirements.txt
 

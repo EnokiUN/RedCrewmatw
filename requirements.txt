@@ -1,3 +1,4 @@
 git+https://github.com/EnokiUN/voltage
 python-dotenv
 Pillow
+mariadb
