@@ -11,9 +11,12 @@ from utils import unwrap
 async def get_prefix(message, client):
     if message.server is None:
         return ['-', client.user.mention+' ', client.user.mention]
-    with open ("prefixes.json", "r") as f:
-        prefixes = json.load(f)
-    return [prefixes.get(str(message.server.id), "-"), client.user.mention+' ', client.user.mention]
+    try:
+        with open ("prefixes.json", "r") as f:
+            prefixes = json.load(f)
+        return [prefixes.get(str(message.server.id), "-"), client.user.mention+' ', client.user.mention]
+    except:
+        return ['-', client.user.mention+' ', client.user.mention]
 
 client = commands.CommandsClient(get_prefix)
 
