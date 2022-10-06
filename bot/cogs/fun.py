@@ -40,19 +40,20 @@ class TickTackToeGame:
         return board
 
     def check_winner(self):
+        player = self.players[(self.turn+1)%2]
         for i in self.board:
             if i[0] == i[1] == i[2] != 0:
-                self.winner = self.player
+                self.winner = player
                 return True
         for i in range(3):
             if self.board[0][i] == self.board[1][i] == self.board[2][i] != 0:
-                self.winner = self.player
+                self.winner = player
                 return True
         if self.board[0][0] == self.board[1][1] == self.board[2][2] != 0:
-            self.winner = self.player
+            self.winner = player
             return True
         if self.board[0][2] == self.board[1][1] == self.board[2][0] != 0:
-            self.winner = self.player
+            self.winner = player
             return True
         if 0 not in self.board[0] and 0 not in self.board[1] and 0 not in self.board[2]:
             self.draw = True
@@ -68,7 +69,7 @@ class TickTackToeGame:
         self.player = self.players[self.turn%2]
 
     def __str__(self):
-        return f"{self.player}'s turn\n{self.render_board()}"
+        return f"{self.player.mention}'s turn\n{self.render_board()}"
 
     @property
     def available(self):
@@ -210,7 +211,7 @@ def setup(client) -> commands.Cog:
             await ctx.send(f"{member.display_name} won!")
 
     @fun.command()
-    async def tto(ctx, member: voltage.Member):
+    async def ttt(ctx, member: voltage.Member):
         """Face someone in the ultimate game of skill, Tic-Tac-Toe."""
         msg = await ctx.send(f"{ctx.author.display_name} challenged {member.display_name} to an epic game of Tic-Tac-Toe")
         game = TickTackToeGame(ctx.author, member)
@@ -220,15 +221,16 @@ def setup(client) -> commands.Cog:
             try:
                 place = int((await client.wait_for("message", timeout=60, check=lambda m: m.author == game.player and m.channel == ctx.channel and m.content in ''.join([str(i) for i in game.available]))).content)
             except asyncio.TimeoutError:
-                await ctx.send(f"{ctx.author.display_name} forfeited!")
+                await ctx.send(f"{game.player.display_name} forfeited!")
+                game.winner = game.players[(game.turn+1)%2]
                 break
             game.make_move(place)
         await msg.edit(game)
         if game.draw:
             await ctx.send(f"{ctx.author.display_name} and {member.display_name} tied!")
-        elif game.winner == ctx.author:
-            await ctx.send(f"{ctx.author.display_name} won!")
+        elif game.winner:
+            await ctx.send(f"{game.winner.mention} won!")
         else:
-            await ctx.send(f"{member.display_name} won!")
+            await ctx.send("..huh")
 
     return fun
