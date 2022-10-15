@@ -67,5 +67,10 @@ async def unload(ctx, cog: str):
     client.remove_extension(f"cogs.{cog}")
     await ctx.reply(f"Cog `{cog}` unloaded")
 
+
+@client.command()
+async def embed(ctx):
+    await ctx.reply(embed=voltage.SendableEmbed(title="a"))
+
 load_dotenv()
 client.run(unwrap(os.getenv('TOKEN')))

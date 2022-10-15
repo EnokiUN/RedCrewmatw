@@ -8,6 +8,8 @@ def setup(client: voltage.Client) -> commands.Cog:
 
     @misc.listen("message")
     async def on_message(message: voltage.Message):
+        if message.content is None:
+            return
         if "/shrug" in message.content:
             await message.channel.send(message.content.replace("/shrug", r"¯\\_(ツ)_/¯"), masquerade=voltage.MessageMasquerade(message.author.display_name, message.author.display_avatar.url))
 
